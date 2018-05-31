@@ -99,6 +99,7 @@
 //Add any more libraries you need HERE (Serial is included in TouchPad.h at 9600 so this can be used without re-including):
 #include "KeyboardUK.h" //Edited version of Arduino keyboard library to add backslash key for UK setup, include standard Arduino library for US setup (#include <Keyboard.h>)
 #include <Mouse.h> //Arduino mouse library
+#include "USB_HID_Keycodes.h"  // support a wide range of keycodes as defined in the USB_HID standard.
 
 #include "TouchPad.h" //File required for TouchPad functionality, DO NOT REMOVE!
 
@@ -113,6 +114,8 @@ void keyPress(int x, int y, int commandSet) {
             //===================================================================== row 0
             case 0://Use this case for row 0, column 0, commandSet 1
               //Keyboard.println("Hello world"); //EXAMPLE Type Hello World
+              Keyboard.pressU(KC_ENTER);
+              Keyboard.releaseAll();
               break;
             //===================================================================== row 1
             case 1://Use this case for row 1, column 0, commandSet 1

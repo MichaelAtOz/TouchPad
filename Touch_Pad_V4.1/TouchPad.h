@@ -39,6 +39,21 @@
 #define SAFE_MODE //Disables OTG programming after first key press, comment out to disable
 //#define RESET //Uncomment to reset EEPROM, upload, and then comment out again to prevent EEPROM being erased on every power cycle
 
+// KEY definitions - these are the ASCII non-USB based codes as per keyboardUK.h/.cpp
+#define KSHIFT    KEY_LEFT_SHIFT
+#define KUP       KEY_UP_ARROW
+#define KDOWN     KEY_DOWN_ARROW
+#define KLEFT     KEY_LEFT_ARROW
+#define KRIGHT    KEY_RIGHT_ARROW
+#define KBACK     KEY_BACKSPACE
+#define KSPACE    0x20 // ASCII 32 SPACE
+#define KRETURN   KEY_RETURN
+#define KLBRACKET 0x5B // ASCII 91 [
+#define KRBRACKET 0x5D // ASCII 93 ]
+#define KPIRATE   0x72 // ASCII 114 r The pirates key
+#define KPIPE     0x1E // ASCII 30 | PIPE/VBAR
+#define KBSLASH   0x1F // ASCII 31 \ BSLASH
+
 //Function definitions
 bool touchDetection();
 void decodeArray(uint16_t dataIn, uint8_t *column, uint8_t *row);
@@ -252,9 +267,9 @@ void setup() {
       LEDs[j][i] = 0;
     }
   }
-  
+
   interruptSetup();//Setup LED matrix driver interrupt
-  
+
   if (state != FACTORY) {//If not still in factory test
     delay(2000);
     digitalWrite(11, HIGH);//Light power LED briefly, signals calibrating
@@ -283,10 +298,10 @@ void setup() {
 
 void loop() {
 
-  switch (state) {//Main state machine for operation
+  switch (state) { //Main state machine for operation
     case NORMAL:
-      touchDetection();//Run touchDetection
-      analogWrite(11, blinker);//Update LED
+      touchDetection(); //Run touchDetection
+      analogWrite(11, blinker); //Update LED
       if (blinker < 255) {
         if (millis() > blinkerC) {
           analogWrite(11, blinker);
@@ -296,31 +311,31 @@ void loop() {
       }
       break;
     case PROG:
-      touchDetection();//Run touchDetection
-      if (millis() > blinkerC) {//Update LED
+      touchDetection(); //Run touchDetection
+      if (millis() > blinkerC) { //Update LED
         analogWrite(11, blinker);
         pulseLED();
         blinkerC = millis() + 4;
       }
       break;
     case PROG_LEDS:
-      touchDetection();//Run touchDetection
-      if (millis() > blinkerC) {//Update LED
+      touchDetection(); //Run touchDetection
+      if (millis() > blinkerC) { //Update LED
         analogWrite(11, blinker);
         pulseLED();
         blinkerC = millis() + 1;
       }
       break;
-    case FACTORY://Only occurs when EEPROM reset.
+    case FACTORY: //Only occurs when EEPROM reset.
       //Wait for all inputs to be tested
       if (factoryTest[0] + factoryTest[1] + factoryTest[2] + factoryTest[3] + factoryTest[4] + factoryTest[5] + factoryTest[6] + factoryTest[7] + factoryTest[8] + factoryTest[9] + factoryTest[10] + factoryTest[11] > 0) {
-        touchDetection();//Run touchDetection
+        touchDetection(); //Run touchDetection
         if (millis() > blinkerC) {
           digitalWrite(11, !digitalRead(11));
           blinkerC = millis() + 300;
         }
       }
-      else {//Test all LEDs
+      else { //Test all LEDs
         for (uint8_t i = 0; i < 6; i++) {
           for (uint8_t j = 0; j < 6; j++) {
             LEDs[j][i] = 0;
@@ -344,13 +359,13 @@ void loop() {
             LEDs[i][j] = 0;
           }
         }
-        for (uint8_t i = 0; i < 6; i++) {//Load current LED pattern
+        for (uint8_t i = 0; i < 6; i++) { //Load current LED pattern
           for (uint8_t j = 0; j < 6; j++) {
             LEDs[j][i] = bitRead(EEPROM.read((currentMode * 200) + 180 + (j)), i);
           }
         }
-        state = NORMAL;//Enter normal operation
-        EEPROM.write(1021, 0);//Set factory test pass
+        state = NORMAL; //Enter normal operation
+        EEPROM.write(1021, 0); //Set factory test pass
       }
       break;
   }
@@ -371,13 +386,13 @@ bool touchDetection() {
       decodeArray(dataIn, &column, &row);
 
       if (column != 10 && row != 10) {
-        vibrate = VIBRATE_LENGTH;//Trigger vibration
+        vibrate = VIBRATE_LENGTH; //Trigger vibration
 
         LEDs[column][row] = 1;
         dataIn = touchDetectionRoutine();
         while ((dataIn & (0b1 << SENr[row])) > 0  || (dataIn & (0b1 << SENc[column])) > 0) {
           dataIn = touchDetectionRoutine();
-#ifdef ENABLE_MULTIPLE_COMMAND_SET//disable multipe command sets
+#ifdef ENABLE_MULTIPLE_COMMAND_SET //disable multiple command sets
           //Horizontal swipe detect
           if ((dataIn & (0b1 << SENr[row])) > 0  && (dataIn & (0b1 << SENc[column])) == 0 && (dataIn & 0b111100010001) > 0 && state == NORMAL) {
             uint8_t columnNew, rowNew;
@@ -398,7 +413,7 @@ bool touchDetection() {
 
               digitalWrite(7, HIGH);
               analogWrite(6, 180);
-              for (int8_t i = 6; i >= 0; i--) {//Change
+              for (int8_t i = 6; i >= 0; i--) { //Change
                 if (i < 4) {
                   analogWrite(6, 127);
                   digitalWrite(7, LOW);
@@ -434,7 +449,7 @@ bool touchDetection() {
 
               digitalWrite(7, HIGH);
               analogWrite(6, 180);
-              for (int8_t i = 6; i >= 0; i--) {//Change
+              for (int8_t i = 6; i >= 0; i--) { //Change
                 if (i < 4) {
                   analogWrite(6, 127);
                   digitalWrite(7, LOW);
@@ -473,7 +488,7 @@ bool touchDetection() {
               //===============================================================================================Swipe Up...
 
               if (state == NORMAL) {
-                if (setupEnable == 1) {//Only enter setup mode immediately after power up!
+                if (setupEnable == 1) { //Only enter setup mode immediately after power up!
                   for (uint8_t i = row; i < 6; i++) {
                     LEDs[column][i] = 1;
                     delay(50);
@@ -515,7 +530,7 @@ bool touchDetection() {
             else {
               //===============================================================================================Swipe Down...
               if (state == NORMAL) {
-                if (setupEnable == 1) {//Only enter setup mode immediately after power up!
+                if (setupEnable == 1) { //Only enter setup mode immediately after power up!
                   digitalWrite(7, HIGH);
                   analogWrite(6, 180);
                   for (int8_t i = row; i >= 0; i--) {
@@ -541,12 +556,12 @@ bool touchDetection() {
                 compat += COMPATDELAY;
                 EEPROM.write(1020, compat);
                 GUI_clear();
-                Keyboard.press(129);//Shift
+                Keyboard.press(KSHIFT); 
                 for (uint8_t i = 0; i < 3; i++) {
-                  toggleKey(218);//Up
+                  toggleKey(KUP); 
                 }
-                Keyboard.release(129);//Shift
-                toggleKey(178);//Backspace
+                Keyboard.release(KSHIFT); 
+                toggleKey(KBACK); 
                 state = PROG1;
               }
 
@@ -635,7 +650,6 @@ bool touchDetection() {
                     case 75: delay(1000); break;
                     case 76: delay(5000); break;
                     case 77: delay(10000); break;
-
                   }
                 }
                 else {
@@ -662,7 +676,7 @@ bool touchDetection() {
               else {
 #endif
                 if (i == 0) {
-                  keyPress(column, row, currentMode + 1); //If key not programmed, default to info stored in flash (KeyDefinitions.h)
+                  keyPress(column, row, currentMode + 1); //If key not programmed, default to info stored in flash (KeyDefinitions.h ?)
                 }
                 break;
 #ifdef ENABLE_OTG_PROGRAMMER
@@ -878,99 +892,99 @@ void GUI_keySelected(uint8_t column, uint8_t row) {
     for (uint8_t i = 0; i < 5; i++) {
       uint8_t temp1 = EEPROM.read((currentMode * 200) + (column * 30) + (row * 5) + (i));
       if (temp1 != 255) {
-        toggleKey(91);
+        toggleKey(KLBRACKET);
         if ((temp1 & 0b01111111) < 84) {
           for (uint8_t j = 0; j < 5; j++) {
             toggleKey(pgm_read_byte(&(KEYS[temp1 & 0b01111111][j])));
           }
         }
         else {
-          toggleKey(32);
-          toggleKey(32);
+          toggleKey(KSPACE);
+          toggleKey(KSPACE);
           toggleKey(pgm_read_byte(&(KEYS_PRESS[temp1 & 0b01111111])));
-          toggleKey(32);
-          toggleKey(32);
+          toggleKey(KSPACE);
+          toggleKey(KSPACE);
         }
-        toggleKey(93);
-        if (temp1 > 127) {
-          toggleKey(114);
+        toggleKey(KRBRACKET);
+        if (temp1 > 127) { // Modifier or non ASCII key
+          toggleKey(KPIRATE); // r The pirates key
         }
         else {
-          toggleKey(32);
+          toggleKey(KSPACE);
         }
       }
       else {
         for (uint8_t j = 0; j < (8 * (5 - i)); j++) {
-          toggleKey(32);
+          toggleKey(KSPACE);
         }
         break;
       }
     }
   }
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   Keyboard.releaseAll();
 }
 
 //Clear current key selection
 void GUI_keyClear() {
   for (uint8_t i = 0; i < 26; i++) {
-    toggleKey(218);//Up
+    toggleKey(KUP);
   }
-  toggleKey(217);//Down
-  toggleKey(216);//Left
+  toggleKey(KDOWN);
+  toggleKey(KLEFT);
 
-  Keyboard.press(129);//Shift
-  Keyboard.press(218);//Up
+  Keyboard.press(KSHIFT);
+  Keyboard.press(KUP);
   Keyboard.releaseAll();
-  toggleKey(178);//Backspace
-  toggleKey(176);//Return
+  toggleKey(KBACK);
+  toggleKey(KRETURN);
   GUI_keySelected(progC, progR);
-  toggleKey(178);//Backspace
-  toggleKey(178);//Backspace
+  toggleKey(KBACK);
+  toggleKey(KBACK);
   for (uint8_t i = 0; i < 26; i++) {
-    toggleKey(217);//Down
+    toggleKey(KDOWN);
   }
-  toggleKey(216);//Left
-  toggleKey(217);//Down
+  toggleKey(KLEFT);
+  toggleKey(KDOWN);
   Keyboard.releaseAll();
 }
 
 //Type basic prog interface
 void GUI_prog() {
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   memoryKeyboard(21, 49, 0);
   memoryKeyboard(22, 48, 0);
   memoryKeyboard(23, 49, 0);
   memoryKeyboard(24, 27, 0);
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   memoryKeyboard(25, 43, 0);
   Keyboard.print((currentMode + 1));
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   memoryKeyboard(26, 49, 0);
   memoryKeyboard(27, 34, 0);
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   Keyboard.releaseAll();
 }
 
 //Type basic LED prog interface
 void GUI_prog_leds() {
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   memoryKeyboard(21, 49, 0);
   memoryKeyboard(22, 48, 0);
   memoryKeyboard(23, 49, 0);
   memoryKeyboard(24, 27, 0);
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   memoryKeyboard(28, 41, 0);
   Keyboard.print((currentMode + 1 ));
-  toggleKey(176); //Return
-  toggleKey(176); //Return
+  toggleKey(KRETURN); 
+  toggleKey(KRETURN); 
   memoryKeyboard(29, 49, 0);
   memoryKeyboard(30, 5, 0);
   Keyboard.releaseAll();
@@ -978,7 +992,7 @@ void GUI_prog_leds() {
 
 //Manage typing and clearing GUI menus for prog interface
 void GUI_menu() {
-  toggleKey(215);
+  toggleKey(KRIGHT);
   switch (GUI_Menu) {
     case 0:
       for (uint8_t i = 0; i < 6; i++) {
@@ -992,7 +1006,7 @@ void GUI_menu() {
       break;
     case 1:
       for (uint8_t i = 0; i < 21; i++) {
-        toggleKey(218);//Up
+        toggleKey(KUP);
       }
       GUI_replace_lines();
       memoryKeyboard(0, 49, 0);
@@ -1006,12 +1020,12 @@ void GUI_menu() {
       memoryKeyboard(4, 49, 0);
       GUI_replace_functions(4);
       memoryKeyboard(5, 49, 0);
-      toggleKey(217);//Down
-      toggleKey(217);//Down
+      toggleKey(KDOWN);
+      toggleKey(KDOWN);
       break;
     case 2:
       for (uint8_t i = 0; i < 21; i++) {
-        toggleKey(218);//Up
+        toggleKey(KUP);
       }
       GUI_replace_lines();
       memoryKeyboard(9, 49, 0);
@@ -1025,12 +1039,12 @@ void GUI_menu() {
       memoryKeyboard(13, 49, 0);
       GUI_replace_functions(4);
       memoryKeyboard(14, 49, 0);
-      toggleKey(217);//Down
-      toggleKey(217);//Down
+      toggleKey(KDOWN);
+      toggleKey(KDOWN);
       break;
     case 3:
       for (uint8_t i = 0; i < 21; i++) {
-        toggleKey(218);//Up
+        toggleKey(KUP);
       }
       GUI_replace_lines();
       memoryKeyboard(15, 49, 0);
@@ -1044,12 +1058,12 @@ void GUI_menu() {
       memoryKeyboard(18, 49, 0);
       GUI_replace_functions(4);
       memoryKeyboard(19, 49, 0);
-      toggleKey(217);//Down
-      toggleKey(217);//Down
+      toggleKey(KDOWN);
+      toggleKey(KDOWN);
       break;
     case 4:
       for (uint8_t i = 0; i < 21; i++) {
-        toggleKey(218);//Up
+        toggleKey(KUP);
       }
       GUI_replace_lines();
       memoryKeyboard(20, 49, 0);
@@ -1063,17 +1077,17 @@ void GUI_menu() {
       memoryKeyboard(41, 49, 0);
       GUI_replace_functions(4);
       memoryKeyboard(42, 28, 0);
-      toggleKey(31);
+      toggleKey(KBSLASH);
       Keyboard.print("   /   ");
-      toggleKey(30);
+      toggleKey(KPIPE);
       Keyboard.print("   /  R C  /");
-      toggleKey(217);//Down
-      toggleKey(217);//Down
+      toggleKey(KDOWN);
+      toggleKey(KDOWN);
       break;
     case 5:
 
       for (uint8_t i = 0; i < 22; i++) {
-        toggleKey(218);//Up
+        toggleKey(KUP);
       }
       GUI_replace_lines();
       memoryKeyboard(8, 49, 0);
@@ -1089,13 +1103,13 @@ void GUI_menu() {
       memoryKeyboard(8, 49, 0);
       GUI_replace_functions(4);
       memoryKeyboard(8, 49, 0);
-      toggleKey(217);//Down
-      toggleKey(217);//Down
+      toggleKey(KDOWN);
+      toggleKey(KDOWN);
       GUI_Menu = 6;
       break;
     case 6:
       for (uint8_t i = 0; i < 22; i++) {
-        toggleKey(218);//Up
+        toggleKey(KUP);
       }
       GUI_replace_lines();
       memoryKeyboard(6, 49, 0);
@@ -1111,8 +1125,8 @@ void GUI_menu() {
       memoryKeyboard(4, 49, 0);
       GUI_replace_functions(4);
       memoryKeyboard(5, 49, 0);
-      toggleKey(217);//Down
-      toggleKey(217);//Down
+      toggleKey(KDOWN);
+      toggleKey(KDOWN);
       break;
   }
   Keyboard.releaseAll();
@@ -1120,39 +1134,39 @@ void GUI_menu() {
 
 //Clear x number lines above cursor position
 void GUI_clear_lines(uint8_t line) {
-  Keyboard.press(129);//Shift
+  Keyboard.press(KSHIFT);
   for (uint8_t i = 0; i < line; i++) {
-    toggleKey(218);//Up
+    toggleKey(KUP);
   }
-  Keyboard.release(129);//Shift
-  toggleKey(178);//Backspace
+  Keyboard.release(KSHIFT);
+  toggleKey(KBACK);
 }
 
 //Delete single line left of cursor
 void GUI_replace_lines() {
-  Keyboard.press(129);//Shift
-  toggleKey(218);//Up
-  Keyboard.release(129);//Shift
-  toggleKey(176); //Return
+  Keyboard.press(KSHIFT);
+  toggleKey(KUP);
+  Keyboard.release(KSHIFT);
+  toggleKey(KRETURN); 
 }
 
 //Scroll down and call replace line
 void GUI_replace_functions(uint8_t line) {
   for (uint8_t i = 0; i < line; i++) {
-    toggleKey(217);//Down
+    toggleKey(KDOWN);
   }
   GUI_replace_lines();
 }
 
 //Delete all and type prog done message
 void GUI_clear() {
-  Keyboard.press(129);//Shift
+  Keyboard.press(KSHIFT);
   for (uint8_t i = 0; i < 35; i++) {
-    toggleKey(218);//Up
+    toggleKey(KUP);
   }
-  Keyboard.release(129);//Shift
-  toggleKey(178);//Backspace
-  toggleKey(176); //Return
+  Keyboard.release(KSHIFT);
+  toggleKey(KBACK);
+  toggleKey(KRETURN); 
   Keyboard.releaseAll();
   memoryKeyboard(31, 49, 0);
   memoryKeyboard(32, 28, 0);
@@ -1167,7 +1181,7 @@ void memoryKeyboard(uint16_t address, uint8_t stringLength, uint8_t printl) {
     toggleKey(pgm_read_byte(&(STRINGS[address][j])));
   }
   if (printl == 1) {
-    toggleKey(176); //Return
+    toggleKey(KRETURN); 
   }
 }
 
