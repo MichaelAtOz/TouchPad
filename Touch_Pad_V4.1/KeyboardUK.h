@@ -99,6 +99,8 @@ public:
   size_t write(uint8_t k);
   size_t press(uint8_t k);
   size_t release(uint8_t k);
+  size_t pressU(uint8_t k);
+  size_t releaseU(uint8_t k);  
   void releaseAll(void);
 };
 extern Keyboard_ Keyboard;
